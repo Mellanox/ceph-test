@@ -6,22 +6,41 @@ ceph_conf_rdma=${ceph_conf_rdma:-"$cpwd/ceph_rdma.conf"}
 ceph_conf_tcp=${ceph_conf_tcp:-"$cpwd/ceph_tcp.conf"}
 rdma_device=${rdma_device:-"mlx5_2"}
 server=${server:-"dory04"}
-server_port=${server_port:-"4455"}
+server_port_tcp="4455"
+server_port_rdma="4456"
 server_app=
 client_app=
 common_so=
 screen_session="ceph_server"
+server_name="ceph_perf_msgr_server"
 
 echo "CEPH rdma configuration file: $ceph_conf_rdma"
 echo "CEPH tcp configuration file: $ceph_conf_tcp"
 echo "RDMA device: $rdma_device"
 echo "Server: $server"
 
-function finish {
-	if [ -z "$server" ]; then
-echo "  " #		ssh screen -X -S ${screen_session} kill
+function kill_server_app()
+{
+	if [ ! -z "$server" ]; then
+		ssh ${server} "pkill -f -9 $server_name > /dev/null" || true
 	fi
 }
+
+function kill_process_running_on_port()
+{
+	local host=$1
+	local port=$2
+
+	sudo ssh $host fuser -s  -k "$port/tcp" ||:
+}
+
+function finish {
+	if [ ! -z "$server" ]; then
+		kill_process_running_on_port $server $server_port_tcp
+		kill_process_running_on_port $server $server_port_rdma
+	fi
+}
+
 trap finish EXIT
 
 function log_err()
@@ -89,7 +108,12 @@ function find_server_ip()
 	local host=$1
 	local device=$2
 
-	local ip=$(ssh ${host} ibdev2netdev | grep mlx5_2 | awk '{print $5}' | xargs -I {} ifconfig {} | grep "inet " | awk -F'[: ]+' '{ print $3 }')
+	echo ${device}
+
+local ip=$(ssh $host << EOF
+	ibdev2netdev | grep ${device} | awk '{print $5}' | xargs -I {} ifconfig {} | grep "inet " | awk -F'[: ]+' '{ print $3 }'
+EOF
+)
 	if ping -q -c 1 -W 1 ${ip} >/dev/null; then
 		log "${ip} is up"
 	else
@@ -109,7 +133,7 @@ function set_exe_paths()
 	fi
 
 	local dir=$(readlink -f ${cpwd})
-	server_app="${dir}/ceph_perf_msgr_server"
+	server_app="${dir}/${server_name}"
 	client_app="${dir}/ceph_perf_msgr_client"
 	common_so="${dir}/libceph-common.so.0"
 
@@ -125,39 +149,68 @@ function run_server()
 {
 	local host=$1
 	local ceph_conf=$2
+	local address=$3
 
-	shift 2
+	shift 3
 
-	ssh $host screen -S $screen_session -d -m "LD_PRELOAD=${common_so} CEPH_CONF=${ceph_conf} ${server_app} $@"
-	local ret=$?
-
-
-#	LD_PRELOAD=/hpc/local/work/sashakot/ceph_async_msg_bench/libceph-common.so.0   /hpc/local/work/sashakot/ceph_async_msg_bench/ceph_perf_msgr_server  1.1.3.1:4455 4 1
+ssh $host << EOF
+export LD_PRELOAD=${common_so}; export CEPH_CONF=${ceph_conf}; nohup ${server_app} $address $@ > ${cpwd}/server.nohup.out  2>&1 &
+EOF
 }
 
 function run_client()
 {
 	local host=$1
 	local ceph_conf=$2
+	local address=$3
 
-	shift 2
+	shift 3
 
-	LD_PRELOAD=${common_so} CEPH_CONF=${ceph_conf} ${client_app} $@
-	local ret=$?
+	LD_PRELOAD=${common_so} CEPH_CONF=${ceph_conf} ${client_app} ${address} $@ 2>&1 |grep Total  | awk '{print substr($6,1,length($6)-3)}'
+	local ret=$(($?))
 
-#LD_PRELOAD=/hpc/local/work/sashakot/ceph_async_msg_bench/libceph-common.so.0   /hpc/local/work/sashakot/ceph_async_msg_bench/ceph_perf_msgr_server  1.1.3.1:4455 4 1
+	#return $ret
 }
 
 create_ceph_rdma_conf_file $ceph_conf_rdma $rdma_device
 create_ceph_tcp_conf_file $ceph_conf_tcp
-server_ip=$(find_server_ip $server $rdma_device)
+#server_ip=$(find_server_ip $server $rdma_device)
+server_ip="1.1.4.1"
 set_exe_paths
 
 echo "Server IP: $server_ip"
-echo "Server port: $server_port"
 echo "Server app: ${server_app}"
 echo "Client app: ${client_app}"
 echo "Common so: ${common_so}"
-run_server ${server} ${ceph_conf_tcp} "$server_ip:$server_port 4 1"
-run_client ${server} ${ceph_conf_tcp} "$server_ip:$server_port 4 4 500 1 2014"
 
+function run_tests()
+{
+	local s=$((1024))
+#	local f=$((1024))
+	local f=$((5*1024*1024))
+	local i=$((10*1024))
+	local us_tcp=
+	local us_rdma=
+	local server_params="4 1"
+	local client_params="4 16 1000 1"
+
+
+	local server_address_tcp="$server_ip:$server_port_tcp"
+	local server_address_rdma="$server_ip:$server_port_rdma"
+
+	while (( s <= f )); do
+		kill_process_running_on_port $server $server_port_tcp
+		run_server ${server} ${ceph_conf_tcp} ${server_address_tcp} ${server_params}
+		us_tcp=$(run_client ${server} ${ceph_conf_tcp}  ${server_address_tcp} "$client_params $s")
+
+		kill_process_running_on_port $server $server_port_rdma
+		run_server ${server} ${ceph_conf_rdma} ${server_address_rdma} ${server_params}
+		us_rdma=$(run_client ${server} ${ceph_conf_rdma}  ${server_address_rdma} "$client_params $s")
+
+		printf  "%s %s %s\n" "$s" "$us_tcp" "$us_rdma"
+		s=$(($s+$i))
+	done
+
+}
+
+run_tests
