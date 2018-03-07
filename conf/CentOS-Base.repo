@@ -1,0 +1,31 @@
+[CentOS-base]
+name=CentOS-$releasever - Base
+#baseurl=http://mirror.centos.org/centos/$releasever/os/$basearch/
+baseurl=http://mirror.centos.org/centos/7/os/x86_64/
+enabled=1
+gpgcheck=0
+
+#released updates
+[CentOS-updates]
+name=CentOS-$releasever - Updates
+#baseurl=http://mirror.centos.org/centos/$releasever/updates/$basearch/
+baseurl=http://mirror.centos.org/centos/7/updates/x86_64/
+enabled=1
+gpgcheck=0
+
+#additional packages that may be useful
+[CentOS-extras]
+name=CentOS-$releasever - Extras
+#baseurl=http://mirror.centos.org/centos/$releasever/extras/$basearch/
+baseurl=http://mirror.centos.org/centos/7/extras/x86_64/
+enabled=1
+gpgcheck=0
+
+#additional packages that extend functionality of existing packages
+[CentOS-centosplus]
+name=CentOS-$releasever - Plus
+#baseurl=http://mirror.centos.org/centos/$releasever/centosplus/$basearch/
+baseurl=http://mirror.centos.org/centos/7/centosplus/x86_64/
+gpgcheck=0
+enabled=0
+
