@@ -1,5 +1,6 @@
 #!/bin/bash
 
+dir=$(pwd `dirname "$0"`)
 hostname=`hostname -s`
 carbon_host=${carbon_host:-"dev-r-vrt-089"}
 carbon_port=${carbon_port:-2003}
@@ -12,10 +13,10 @@ else
 	ms_type="tcp"
 fi
 
-pidstat -h -d -u -C $process_name 1  \
+pidstat -h -d -u -C $process_name 1 | \
 	grep --line-buffered -v '^$' | \
 	grep --line-buffered -v '^#' | \
 	grep --line-buffered -v '^Linux' | \
 	awk --assign=hostname=${hostname} --assign=app=${process_name} \
 	    --assign=type=${ms_type} --assign=setup=${setup_name}  \
-             -f ./ceph_parse_pidstat.awk  > /dev/tcp/${carbon_host}/${carbon_port}
+             -f ${dir}/ceph_parse_pidstat.awk  > /dev/tcp/${carbon_host}/${carbon_port}
