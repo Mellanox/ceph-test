@@ -1,6 +1,6 @@
 #!/bin/bash
 
-dir=$(pwd `dirname "$0"`)
+dir=$( cd "$(dirname "$0")" ; pwd -P )
 hostname=`hostname -s`
 carbon_host=${carbon_host:-"dev-r-vrt-089"}
 carbon_port=${carbon_port:-2003}

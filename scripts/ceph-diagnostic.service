@@ -1,0 +1,8 @@
+[Unit]
+Description=Ceph diagnostic
+
+[Service]
+ExecStart=/opt/ceph-diagnostic/ceph_carbon_ad_hoc_report.sh
+
+[Install]
+WantedBy=multi-user.target
