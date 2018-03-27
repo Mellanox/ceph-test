@@ -19,4 +19,4 @@ pidstat -h -d -u -C $process_name 1 | \
 	grep --line-buffered -v '^Linux' | \
 	awk --assign=hostname=${hostname} --assign=app=${process_name} \
 	    --assign=type=${ms_type} --assign=setup=${setup_name}  \
-             -f ${dir}/ceph_parse_pidstat.awk  > /dev/tcp/${carbon_host}/${carbon_port}
+             -f ${dir}/mlnx-ceph-pidstat-report.awk  > /dev/tcp/${carbon_host}/${carbon_port}
