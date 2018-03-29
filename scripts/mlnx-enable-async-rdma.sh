@@ -59,5 +59,8 @@ echo "IPv4: ${ip}"
 echo "GID: $gid"
 
 set_key_value "ms_type" ${ms_type}
-set_key_value "sync_rdma_device_name" ${ib_dev}
-set_key_value "ms_async_rdma_local_gid" ${gid}
+
+if [[ "async+rdma" == ${ms_type} ]]; then
+	set_key_value "sync_rdma_device_name" ${ib_dev}
+	set_key_value "ms_async_rdma_local_gid" ${gid}
+fi
