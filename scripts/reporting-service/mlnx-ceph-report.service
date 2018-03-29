@@ -6,3 +6,5 @@ ExecStart=/opt/mellanox/ceph/reporting-service/mlnx-ceph-report.sh
 
 [Install]
 WantedBy=multi-user.target
+#Wants=ceph.target
+After=ceph.target
