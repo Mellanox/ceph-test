@@ -10,7 +10,7 @@ function set_key_value()
 	local value=$2
 
 	if grep -q $key ${ceph_conf}; then
-		sed -i '/ *'"$key"'/s/= .*/= '"$value"'/' ${ceph_conf}
+		sed -i '/ *'"$key"'/s/= .*/= '" $value"'/' ${ceph_conf}
 	else
 		# TODO: Add to global section
 		echo "ms_type = $ms_type" >> ${ceph_conf}
