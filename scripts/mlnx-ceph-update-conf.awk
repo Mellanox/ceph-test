@@ -2,16 +2,18 @@
 
 function print_key_val(key, val)
 {
-	if (length(val) != 0)
-		print key, val
-	is_printed = true
+	if (!is_printed) {
+		if (length(val) != 0)
+			print key, val
+		is_printed = 1
+	}
 }
 
 BEGIN {
 	FS = OFS = "="
 	current_section = ""
-	is_printed = false
-	is_section_found = false
+	is_printed = 0
+	is_section_found = 0
 }
 
 # Skip comments
@@ -20,7 +22,7 @@ BEGIN {
 
 # Get current section
 /^[:space]*\[.*\]/ {
-        if (current_section ~ /\[[:space]*section[:space]*\]/) {
+        if (current_section ~ section && !is_printed) {
 		# Leaving our section, add the key
 		print_key_val(key, value)
 	}
@@ -28,7 +30,8 @@ BEGIN {
 	current_section = $1
 
 	if (current_section ~ section)
-		is_section_found = true
+		is_section_found = 1
+
 }
 
 # Skip other sections
@@ -40,6 +43,7 @@ $1 != key {print $0; next}
 # Update our key
 $1 == key {
 	print_key_val(key, value)
+	next
 }
 
 END {
