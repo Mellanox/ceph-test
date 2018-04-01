@@ -2,6 +2,7 @@
 
 ceph_conf=${ceph_conf:="/etc/ceph/ceph.conf"}
 script_name=$(basename "$0")
+script_dir=$(dirname "$0")
 ib_dev=${ib_dev:-"mlx5_2"}
 
 function set_key_value()
@@ -9,12 +10,8 @@ function set_key_value()
 	local key=$1
 	local value=$2
 
-	if grep -q $key ${ceph_conf}; then
-		sed -i '/ *'"$key"'/s/= .*/= '" $value"'/' ${ceph_conf}
-	else
-		# TODO: Add to global section
-		echo "ms_type = $ms_type" >> ${ceph_conf}
-	fi
+	${script_dir}/mlnx-ceph-update-conf.awk -v section=global -v key=$key value=$value ${ceph_conf} > ${ceph_conf}.tmp
+	mv ${ceph_conf}.tmp ${ceph_conf}
 }
 
 function show_usage()
@@ -57,6 +54,8 @@ echo "IB device: ${ib_dev}"
 echo "Network device: ${net_dev}"
 echo "IPv4: ${ip}"
 echo "GID: $gid"
+
+cp ${ceph_conf} ${ceph_conf}.bak
 
 set_key_value "ms_type" ${ms_type}
 
