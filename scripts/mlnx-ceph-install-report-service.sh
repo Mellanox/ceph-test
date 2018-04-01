@@ -8,6 +8,7 @@ name="mlnx-ceph-report"
 mkdir -p ${target}
 cp ${source}/mlnx-ceph-* ${target}
 
+systemctl stop $name > /dev/null
 cp ${source}/$name.service /etc/systemd/system
 systemctl daemon-reload
 systemctl start $name

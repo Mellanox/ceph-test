@@ -1,10 +1,10 @@
 [Unit]
 Description=MLNX CEPH reporting service
+#Wants=ceph.target
+After=ceph.target
 
 [Service]
 ExecStart=/opt/mellanox/ceph/reporting-service/mlnx-ceph-report.sh
 
 [Install]
 WantedBy=multi-user.target
-#Wants=ceph.target
-After=ceph.target
