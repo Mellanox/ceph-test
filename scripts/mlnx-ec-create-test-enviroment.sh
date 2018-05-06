@@ -6,7 +6,7 @@ repos=( "http://lab.jerasure.org/jerasure/gf-complete.git" "http://lab.jerasure.
 for repo in ${repos[@]};do
 	echo "$repo"
 
-	git clone --depth 1 ${repo}
+#	git clone --depth 1 ${repo}
 done
 
 prefix="$pwd/install"
@@ -22,6 +22,7 @@ autoreconf --force --install -I m4
 make -j install
 cd ..
 
-cd storage_verification/e2e_ver/vsa/scripts/ec_tests
+#cd storage_verification/e2e_ver/vsa/scripts/ec_tests
+CFLAGS="-I$prefix/include -I$prefix/include/jerasure" make -C storage_verification/e2e_ver/vsa/scripts/ec_tests 
 
 echo $pwd
