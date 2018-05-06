@@ -34,13 +34,16 @@ cd ..
 echo "Building erasure coding tester ..."
 CFLAGS="-I$prefix/include -I$prefix/include/jerasure" LIBRARY_PATH="$prefix/lib" make -C "$pwd/storage_verification/e2e_ver/vsa/scripts/ec_tests"
 
+echo ""
+echo ""
 echo "How to run:"
 echo "   Provide a path to gf-complete and jerasure in command line using \$LD_LIBRARY_PATH."
-echo "   If you run the tester not from a current folder, fix \$PATH ."
-echo "   Run /$pwd/storage_verification/e2e_ver/vsa/scripts/ec_tests/run_ec_perf_encode.sh --help to see command line parameters."
+echo "   Run /$pwd/storage_verification/e2e_ver/vsa/scripts/ec_tests/ibv_ec_perf_sync --help to see command line parameters."
 echo "   Don't forget to provide valid IB and network interfaces."
 echo ""
-echo "Example:"
-echo "LD_LIBRARY_PATH=$prefix/lib PATH=\$PATH:$pwd/storage_verification/e2e_ver/vsa/scripts/ec_tests/  $pwd/storage_verification/e2e_ver/vsa/scripts/ec_tests/run_ec_perf_encode.sh -d mlx5_4 -i ib0 -k 10 -m 2 -w 8 -c 1 -b 1024,1024 -q 1 -l 512 -r 180"
+LD_LIBRARY_PATH=$prefix/lib $pwd/storage_verification/e2e_ver/vsa/scripts/ec_tests/ibv_ec_perf_sync --help
 
-echo $pwd
+echo "Example:"
+#echo "LD_LIBRARY_PATH=$prefix/lib PATH=\$PATH:$pwd/storage_verification/e2e_ver/vsa/scripts/ec_tests/  $pwd/storage_verification/e2e_ver/vsa/scripts/ec_tests/run_ec_perf_encode.sh -d mlx5_4 -i ib0 -k 10 -m 2 -w 8 -c 1 -b 1024,1024 -q 1 -l 512 -r 180"
+echo "LD_LIBRARY_PATH=$prefix/lib $pwd/storage_verification/e2e_ver/vsa/scripts/ec_tests/ibv_ec_perf_sync -r 16 -f 0 -i mlx5_4 -k 10 -m 2 -w 8 -s 10485760"
+
